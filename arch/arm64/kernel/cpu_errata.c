@@ -297,7 +297,7 @@ void __init arm64_enable_wa2_handling(struct alt_instr *alt,
 		*updptr = cpu_to_le32(aarch64_insn_gen_nop());
 }
 
-static void do_ssbd(bool state)
+void arm64_set_ssbd_mitigation(bool state)
 {
 	switch (psci_ops.conduit) {
 	case PSCI_CONDUIT_HVC:
@@ -371,20 +371,20 @@ static bool has_ssbd_mitigation(const struct arm64_cpu_capabilities *entry,
 	switch (ssbd_state) {
 	case ARM64_SSBD_FORCE_DISABLE:
 		pr_info_once("%s disabled from command-line\n", entry->desc);
-		do_ssbd(false);
+		arm64_set_ssbd_mitigation(false);
 		required = false;
 		break;
 
 	case ARM64_SSBD_EL1_ENTRY:
 		if (required) {
 			__this_cpu_write(arm64_ssbd_callback_required, 1);
-			do_ssbd(true);
+			arm64_set_ssbd_mitigation(true);
 		}
 		break;
 
 	case ARM64_SSBD_FORCE_ENABLE:
 		pr_info_once("%s forced from command-line\n", entry->desc);
-		do_ssbd(true);
+		arm64_set_ssbd_mitigation(true);
 		required = true;
 		break;
 
