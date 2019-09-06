@@ -204,6 +204,10 @@ HWCAP2_FRINT
 
     Functionality implied by ID_AA64ISAR1_EL1.FRINTTS == 0b0001.
 
+HWCAP2_MTE
+
+    Functionality implied by ID_AA64PFR1_EL1.MTE == 0b0010.
+    Documentation/arm64/memory-tagging-extension.rst.
 
 4. Unused AT_HWCAP bits
 -----------------------
