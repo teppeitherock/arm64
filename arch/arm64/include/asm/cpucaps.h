@@ -56,7 +56,10 @@
 #define ARM64_WORKAROUND_CAVIUM_TX2_219_PRFM	46
 #define ARM64_WORKAROUND_1542419		47
 #define ARM64_WORKAROUND_1319367		48
+/* 49 reserved for ARM64_HAS_E0PD */
+/* 50 reserved for ARM64_BTI */
+#define ARM64_MTE				51
 
-#define ARM64_NCAPS				49
+#define ARM64_NCAPS				52
 
 #endif /* __ASM_CPUCAPS_H */
