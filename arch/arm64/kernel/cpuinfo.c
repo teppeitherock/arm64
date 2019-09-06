@@ -92,6 +92,8 @@ static const char *const hwcap_str[] = {
 	"bf16",
 	"dgh",
 	"rng",
+	"",		/* reserved for BTI */
+	"mte",
 	NULL
 };
 
