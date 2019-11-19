@@ -21,7 +21,13 @@
 #include <asm/page.h>
 #include <asm/pgtable-hwdef.h>
 #include <asm/ptrace.h>
+#include <asm/sysreg.h>
 #include <asm/thread_info.h>
+
+#ifdef CONFIG_ARM64_MTE
+	.arch		armv8.5-a
+	.arch_extension memtag
+#endif
 
 	.macro save_and_disable_daif, flags
 	mrs	\flags, daif
@@ -730,6 +736,17 @@ USER(\label, ic	ivau, \tmp2)			// invalidate I line PoU
 	.endif
 	.previous
 .Lyield_out_\@ :
+	.endm
+
+/*
+ * multitag_transfer_size - set \reg to the block size that is accessed by the
+ * LDGM/STGM instructions.
+ */
+	.macro	multitag_transfer_size, reg, tmp
+	mrs_s	\reg, SYS_GMID_EL1
+	ubfx	\reg, \reg, #SYS_GMID_EL1_BS_SHIFT, #SYS_GMID_EL1_BS_SIZE
+	mov	\tmp, #4
+	lsl	\reg, \tmp, \reg
 	.endm
 
 #endif	/* __ASM_ASSEMBLER_H */
