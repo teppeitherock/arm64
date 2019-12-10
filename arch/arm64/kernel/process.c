@@ -502,6 +502,15 @@ static void update_sctlr_el1_tcf0(u64 tcf0)
 	sysreg_clear_set(sctlr_el1, SCTLR_EL1_TCF0_MASK, tcf0);
 }
 
+static void update_gcr_el1_excl(u64 excl)
+{
+	/*
+	 * No need for ISB since this only affects EL0 currently, implicit
+	 * with ERET.
+	 */
+	sysreg_clear_set_s(SYS_GCR_EL1, SYS_GCR_EL1_EXCL_MASK, excl);
+}
+
 /* Handle MTE thread switch */
 static void mte_thread_switch(struct task_struct *next)
 {
@@ -511,6 +520,7 @@ static void mte_thread_switch(struct task_struct *next)
 	/* avoid expensive SCTLR_EL1 accesses if no change */
 	if (current->thread.sctlr_tcf0 != next->thread.sctlr_tcf0)
 		update_sctlr_el1_tcf0(next->thread.sctlr_tcf0);
+	update_gcr_el1_excl(next->thread.gcr_excl);
 }
 #else
 static void mte_thread_switch(struct task_struct *next)
@@ -641,22 +651,31 @@ static long set_mte_ctrl(unsigned long arg)
 	update_sctlr_el1_tcf0(tcf0);
 	preempt_enable();
 
+	current->thread.gcr_excl = (arg & PR_MTE_EXCL_MASK) >> PR_MTE_EXCL_SHIFT;
+	update_gcr_el1_excl(current->thread.gcr_excl);
+
 	return 0;
 }
 
 static long get_mte_ctrl(void)
 {
+	unsigned long ret;
+
 	if (!system_supports_mte())
 		return 0;
 
+	ret = current->thread.gcr_excl << PR_MTE_EXCL_SHIFT;
+
 	switch (current->thread.sctlr_tcf0) {
 	case SCTLR_EL1_TCF0_SYNC:
-		return PR_MTE_TCF_SYNC;
+		ret |= PR_MTE_TCF_SYNC;
+		break;
 	case SCTLR_EL1_TCF0_ASYNC:
-		return PR_MTE_TCF_ASYNC;
+		ret |= PR_MTE_TCF_ASYNC;
+		break;
 	}
 
-	return 0;
+	return ret;
 }
 #else
 static long set_mte_ctrl(unsigned long arg)
@@ -684,7 +703,7 @@ long set_tagged_addr_ctrl(unsigned long arg)
 		return -EINVAL;
 
 	if (system_supports_mte())
-		valid_mask |= PR_MTE_TCF_MASK;
+		valid_mask |= PR_MTE_TCF_MASK | PR_MTE_EXCL_MASK;
 
 	if (arg & ~valid_mask)
 		return -EINVAL;
